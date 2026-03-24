@@ -12,6 +12,7 @@ import os
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+templates.env.add_extension('jinja2.ext.do')
 
 def get_current_user_safe(request: Request, db: Session = Depends(get_db)):
     try:
