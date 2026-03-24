@@ -26,8 +26,17 @@
 </div>
 {% else %}
 <div class="task-grid">
+    {% set urgent_list = [] %}
     {% for task in tasks %}
-    <div class="task-card">
+        {% set is_overdue = task.due_date and task.due_date.date() < today and not task.is_completed %}
+        {% set is_due_today = task.due_date and task.due_date.date() == today and not task.is_completed %}
+        {% set is_urgent = is_due_today or is_overdue or (task.priority == 'high' and not task.is_completed) %}
+        
+        {% if is_urgent %}
+            {% do urgent_list.append({"title": task.title, "due": task.due_date.strftime('%b %d') if task.due_date else 'No date'}) %}
+        {% endif %}
+
+    <div class="task-card {% if is_due_today or is_overdue %}glow-urgent{% endif %}" id="task-{{ task.id }}">
         <div class="task-header">
             <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                 <h3 class="task-title">{{ task.title }}</h3>
@@ -81,5 +90,17 @@ function toggleDesc(id) {
         btn.textContent = 'Show more';
     }
 }
+
+// Sync urgent tasks with the navbar bell
+document.addEventListener('DOMContentLoaded', () => {
+    const urgentTasks = [
+        {% for item in urgent_list %}
+        { title: "{{ item.title }}", due: "{{ item.due }}" },
+        {% endfor %}
+    ];
+    if (window.updateNotifications) {
+        window.updateNotifications(urgentTasks);
+    }
+});
 </script>
 {% endblock %}

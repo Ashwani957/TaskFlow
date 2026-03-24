@@ -15,7 +15,18 @@
         <div class="container navbar-content">
             <a href="/" class="logo">TaskFlow</a>
             <div class="nav-links">
+                <button id="theme-toggle" class="theme-toggle" title="Toggle Dark/Light Mode">🌓</button>
                 {% if user %}
+                    <div class="notif-bell" id="notif-bell" title="Important Tasks">
+                        🔔
+                        <span class="notif-badge" id="notif-count" style="display: none;">0</span>
+                        <div class="dropdown" id="notif-dropdown">
+                            <div class="dropdown-header">Important Tasks</div>
+                            <div id="notif-list">
+                                <div class="dropdown-item">No urgent tasks!</div>
+                            </div>
+                        </div>
+                    </div>
                     <span class="nav-link" style="color: var(--text); font-weight: 600;">👋 Hello, {{ user.name or user.username }}</span>
                     <a href="/tasks" class="nav-link">My Tasks</a>
                     <a href="/tasks/create" class="btn btn-primary">New Task</a>
@@ -35,5 +46,58 @@
     <footer style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.875rem;">
         &copy; 2024 TaskFlow. Built with FastAPI & Jinja2.
     </footer>
+    <script>
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.documentElement; // Using html element for data-theme
+        
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        body.setAttribute('data-theme', currentTheme);
+        themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+
+        themeToggle.addEventListener('click', () => {
+            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        });
+
+        // Notification Bell Logic
+        const bell = document.getElementById('notif-bell');
+        const dropdown = document.getElementById('notif-dropdown');
+        
+        if (bell) {
+            bell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('active');
+            });
+            
+            document.addEventListener('click', () => {
+                dropdown.classList.remove('active');
+            });
+        }
+
+        // Global function to update notifications
+        window.updateNotifications = function(urgentTasks) {
+            const countElem = document.getElementById('notif-count');
+            const listElem = document.getElementById('notif-list');
+            
+            if (!countElem || !listElem) return;
+            
+            if (urgentTasks.length > 0) {
+                countElem.textContent = urgentTasks.length;
+                countElem.style.display = 'flex';
+                listElem.innerHTML = urgentTasks.map(t => `
+                    <a href="/tasks" class="dropdown-item">
+                        <strong>Urgent:</strong> ${t.title}
+                        <div style="font-size: 0.7rem; color: var(--error);">Due: ${t.due}</div>
+                    </a>
+                `).join('');
+            } else {
+                countElem.style.display = 'none';
+                listElem.innerHTML = '<div class="dropdown-item">No urgent tasks!</div>';
+            }
+        };
+    </script>
 </body>
 </html>
