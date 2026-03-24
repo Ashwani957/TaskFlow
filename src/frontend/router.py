@@ -25,13 +25,13 @@ def get_current_user_safe(request: Request, db: Session = Depends(get_db)):
 async def home(request: Request, user: UserModel = Depends(get_current_user_safe)):
     if user:
         return RedirectResponse(url="/tasks")
-    return templates.TemplateResponse(request=request, name="login.html", context={"user": user})
+    return templates.TemplateResponse(request, "login.html", {"user": user})
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, user: UserModel = Depends(get_current_user_safe)):
     if user:
         return RedirectResponse(url="/tasks")
-    return templates.TemplateResponse(request=request, name="login.html", context={"user": user})
+    return templates.TemplateResponse(request, "login.html", {"user": user})
 
 @router.post("/login")
 async def login(
@@ -51,7 +51,7 @@ async def login(
         redirect.set_cookie(key="access_token", value=f"Bearer {token}", httponly=True)
         return redirect
     except Exception as e:
-        return templates.TemplateResponse(request=request, name="login.html", context={
+        return templates.TemplateResponse(request, "login.html", {
             "error": str(e.detail) if hasattr(e, "detail") else "Invalid credentials",
             "user": None
         })
@@ -60,7 +60,7 @@ async def login(
 async def register_page(request: Request, user: UserModel = Depends(get_current_user_safe)):
     if user:
         return RedirectResponse(url="/tasks")
-    return templates.TemplateResponse(request=request, name="register.html", context={"user": user})
+    return templates.TemplateResponse(request, "register.html", {"user": user})
 
 @router.post("/register")
 async def register(
@@ -76,7 +76,7 @@ async def register(
         user_controller.register(user_data, db)
         return RedirectResponse(url="/login?msg=Registered successfully", status_code=status.HTTP_303_SEE_OTHER)
     except Exception as e:
-        return templates.TemplateResponse(request=request, name="register.html", context={
+        return templates.TemplateResponse(request, "register.html", {
             "error": str(e.detail) if hasattr(e, "detail") else "Registration failed",
             "user": None
         })
@@ -116,7 +116,7 @@ async def list_tasks(
         
     tasks = tasks_query.all()
     from datetime import datetime
-    return templates.TemplateResponse(request=request, name="index.html", context={
+    return templates.TemplateResponse(request, "index.html", {
         "tasks": tasks, 
         "user": user, 
         "sort": sort,
@@ -125,7 +125,7 @@ async def list_tasks(
 
 @router.get("/tasks/create", response_class=HTMLResponse)
 async def create_task_page(request: Request, user: UserModel = Depends(is_authenticated)):
-    return templates.TemplateResponse(request=request, name="task_form.html", context={"user": user, "task": None})
+    return templates.TemplateResponse(request, "task_form.html", {"user": user, "task": None})
 
 @router.post("/tasks/create")
 async def create_task(

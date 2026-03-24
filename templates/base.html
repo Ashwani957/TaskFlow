@@ -39,8 +39,8 @@
                     {% if user %}
                         <a href="/tasks" class="nav-link">My Tasks</a>
                         <div class="user-profile">
-                            <div class="user-avatar">{{ (user.name or user.username)[0]|upper }}</div>
-                            <span style="font-weight: 600; font-size: 0.875rem; color: var(--text);">{{ user.name or user.username }}</span>
+                            <div class="user-avatar">{{ ((user.name or user.username or "U") | string)[0]|upper }}</div>
+                            <span style="font-weight: 600; font-size: 0.875rem; color: var(--text);">{{ user.name or user.username or "User" }}</span>
                         </div>
                         <a href="/logout" class="nav-link" style="font-size: 0.875rem;">Logout</a>
                     {% else %}
