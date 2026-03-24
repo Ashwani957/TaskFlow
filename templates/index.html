@@ -20,13 +20,13 @@
     </div>
 </header>
 
+{% set ns = namespace(urgent_list=[]) %}
 {% if not tasks %}
 <div style="text-align: center; padding: 4rem; background: var(--surface); border-radius: var(--radius); border: 2px dashed var(--border);">
     <p style="color: var(--text-muted); font-size: 1.125rem;">No tasks found. Start by creating one!</p>
 </div>
 {% else %}
 <div class="task-grid">
-    {% set ns = namespace(urgent_list=[]) %}
     {% for task in tasks %}
         {% set is_overdue = task.due_date and task.due_date.date() < today and not task.is_completed %}
         {% set is_due_today = task.due_date and task.due_date.date() == today and not task.is_completed %}
