@@ -11,6 +11,16 @@ from fastapi.staticfiles import StaticFiles
 Base.metadata.create_all(engine)
 app=FastAPI(title="This is my Task Management Applications")
 
+@app.middleware("http")
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as e:
+        import traceback
+        return Response(content=f"Global Error: {str(e)}\n\n{traceback.format_exc()}", media_type="text/plain", status_code=500)
+
+from fastapi import Request, Response
+
 # Mount Static Files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
