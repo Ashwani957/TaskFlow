@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{% if task %}Edit Task{% else %}New Task{% endif %} - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="form-container" style="max-width: 600px;">
+    <h1 class="form-title">{% if task %}Edit Task{% else %}Create New Task{% endif %}</h1>
+    
+    <form action="{% if task %}/tasks/edit/{{ task.id }}{% else %}/tasks/create{% endif %}" method="post">
+        <div class="form-group">
+            <label class="form-label" for="title">Task Title</label>
+            <input class="form-input" type="text" id="title" name="title" value="{{ task.title if task else '' }}" required placeholder="What needs to be done?">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-input" id="description" name="description" rows="4" placeholder="Add more details about this task...">{{ task.description if task else '' }}</textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label class="form-label" for="priority">Priority</label>
+                <select class="form-input" id="priority" name="priority">
+                    <option value="low" {% if task and task.priority == 'low' %}selected{% endif %}>Low</option>
+                    <option value="medium" {% if not task or task.priority == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="high" {% if task and task.priority == 'high' %}selected{% endif %}>High</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="due_date">Due Date</label>
+                <input class="form-input" type="date" id="due_date" name="due_date" 
+                    value="{{ task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '' }}">
+            </div>
+        </div>
+
+        {% if task %}
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="is_completed" name="is_completed" value="on" {% if task.is_completed %}checked{% endif %} style="width: 1.25rem; height: 1.25rem; accent-color: var(--primary);">
+            <label class="form-label" for="is_completed" style="margin-bottom: 0;">Mark as completed</label>
+        </div>
+        {% endif %}
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="flex: 2; padding: 0.875rem;">
+                {% if task %}Update Task{% else %}Create Task{% endif %}
+            </button>
+            <a href="/tasks" class="btn btn-outline" style="flex: 1; padding: 0.875rem;">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
