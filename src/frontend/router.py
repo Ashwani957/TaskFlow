@@ -12,7 +12,6 @@ import os
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
-templates.env.add_extension('jinja2.ext.do')
 
 def get_current_user_safe(request: Request, db: Session = Depends(get_db)):
     try:
@@ -24,13 +23,9 @@ def get_current_user_safe(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request, user: UserModel = Depends(get_current_user_safe)):
-    try:
-        if user:
-            return RedirectResponse(url="/tasks")
-        return templates.TemplateResponse(request=request, name="login.html", context={"user": user})
-    except Exception as e:
-        import traceback
-        return Response(content=f"Error: {str(e)}\n\n{traceback.format_exc()}", media_type="text/plain")
+    if user:
+        return RedirectResponse(url="/tasks")
+    return templates.TemplateResponse(request=request, name="login.html", context={"user": user})
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, user: UserModel = Depends(get_current_user_safe)):
