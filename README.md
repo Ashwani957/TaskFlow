@@ -47,7 +47,9 @@ python main.py
 env/Scripts/python.exe -m uvicorn main:app --reload
 ```
 
-Then visit: **[http://127.0.0.1:8000](http://127.0.0.1:8000)** 🌐
+Then visit: 
+**1. http://127.0.0.1:8000](http://127.0.0.1:8000)** 🌐
+**2. https://taskflow-1-ox2g.onrender.com/tasks**
 
 ---
 
