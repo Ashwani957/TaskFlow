@@ -47,7 +47,7 @@ python main.py
 env/Scripts/python.exe -m uvicorn main:app --reload
 ```
 
-Then visit: **https://taskflow-1-ox2g.onrender.com/tasks**🌐
+Then visit: **https://taskflow-1-ox2g.onrender.com/tasks** 🌐
 
 ---
 
