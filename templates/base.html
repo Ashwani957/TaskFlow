@@ -16,6 +16,7 @@
             <a href="/" class="logo">TaskFlow</a>
             <div class="nav-links">
                 {% if user %}
+                    <span class="nav-link" style="color: var(--text); font-weight: 600;">👋 Hello, {{ user.name or user.username }}</span>
                     <a href="/tasks" class="nav-link">My Tasks</a>
                     <a href="/tasks/create" class="btn btn-primary">New Task</a>
                     <a href="/logout" class="nav-link">Logout</a>

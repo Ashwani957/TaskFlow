@@ -5,8 +5,8 @@
 {% block content %}
 <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
     <div>
-        <h1 style="font-size: 2rem; font-weight: 700;">My Tasks</h1>
-        <p style="color: var(--text-muted);">Manage and monitor your daily activities</p>
+        <h1 style="font-size: 2rem; font-weight: 700;">Welcome back, {{ user.name or user.username }}!</h1>
+        <p style="color: var(--text-muted);">You have {{ tasks|length }} tasks to manage today.</p>
     </div>
     <div style="display: flex; align-items: center; gap: 1rem;">
         <form action="/tasks" method="get" id="sort-form">

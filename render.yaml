@@ -1,0 +1,26 @@
+databases:
+  - name: taskflow_db
+    databaseName: taskflow
+    user: taskflow_user
+    plan: free # Change to starter if you need more than 1GB
+
+services:
+  - type: web
+    name: taskflow-app
+    plan: free
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DB_CONNECTION
+        fromDatabase:
+          name: taskflow_db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true # Generates a random secure key for you
+      - key: ALGORITHM
+        value: HS256
+      - key: EXP_Time
+        value: 10080
+      - key: PYTHON_VERSION
+        value: 3.10.0
