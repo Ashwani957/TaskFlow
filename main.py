@@ -7,7 +7,8 @@ from src.frontend.router import router as frontend_router
 from fastapi.staticfiles import StaticFiles
 import mimetypes
 import os
-
+mimetypes.init()
+mimetypes.add_type('text/css', '.css')
 # when our application run then our application start connection in database 
 # 
 Base.metadata.create_all(engine)
