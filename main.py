@@ -22,7 +22,12 @@ async def catch_exceptions_middleware(request: Request, call_next):
         return Response(content=f"Global Error: {str(e)}\n\n{traceback.format_exc()}", media_type="text/plain", status_code=500)
 
 # Mount Static Files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+script_dir = os.path.dirname(__file__)
+static_path = os.path.join(script_dir, "static")
+
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # include routes are used to register the routes in the main routes 
 app.include_router(frontend_router)
