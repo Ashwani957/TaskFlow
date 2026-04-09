@@ -1,10 +1,11 @@
-from fastapi import FastAPI,Request,Response
-from src.utils.db import Base , engine 
-from src.tasks.models  import TaskModel
-from src.tasks.router  import task_routes
+from fastapi import FastAPI, Request, Response
+from src.utils.db import Base, engine 
+from src.tasks.models import TaskModel
+from src.tasks.router import task_routes
 from src.user.router import user_routes
 from src.frontend.router import router as frontend_router
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 import mimetypes
 import os
 mimetypes.init()
