@@ -9,6 +9,7 @@ import mimetypes
 import os
 mimetypes.init()
 mimetypes.add_type('text/css', '.css')
+mimetypes.add_type('application/javascript', '.js')
 # when our application run then our application start connection in database 
 # 
 Base.metadata.create_all(engine)
