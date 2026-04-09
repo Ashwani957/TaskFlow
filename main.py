@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Request,Response
 from src.utils.db import Base , engine 
 from src.tasks.models  import TaskModel
 from src.tasks.router  import task_routes
@@ -14,8 +14,15 @@ mimetypes.add_type('application/javascript', '.js')
 # 
 Base.metadata.create_all(engine)
 app=FastAPI(title="This is my Task Management Applications")
+ # 3. HTTPS Middleware (Fixes the "Blocked Mixed Content" error in your screenshot)
+class HTTPSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # This forces FastAPI to generate 'https' links for static files
+        request.scope["scheme"] = "https"
+        response = await call_next(request)
+        return response
 
-from fastapi import Request, Response
+app.add_middleware(HTTPSMiddleware)
 
 @app.middleware("http")
 async def catch_exceptions_middleware(request: Request, call_next):
