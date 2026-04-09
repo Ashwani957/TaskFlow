@@ -5,6 +5,7 @@ from src.tasks.router  import task_routes
 from src.user.router import user_routes
 from src.frontend.router import router as frontend_router
 from fastapi.staticfiles import StaticFiles
+import mimetypes
 import os
 
 # when our application run then our application start connection in database 
@@ -24,9 +25,14 @@ async def catch_exceptions_middleware(request: Request, call_next):
 
 # Mount Static Files
 # Here we change the static path to the dynamic path 
-script_dir = os.path.dirname(__file__)
+ # Fix for potential MIME type issues on Linux
+mimetypes.add_type('text/css', '.css')
+
+# Get absolute path
+script_dir = os.path.dirname(os.path.abspath(__file__))
 static_path = os.path.join(script_dir, "static")
 
+# Mount
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 # app.mount("/static", StaticFiles(directory="static"), name="static")
