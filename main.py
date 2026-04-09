@@ -22,6 +22,7 @@ async def catch_exceptions_middleware(request: Request, call_next):
         return Response(content=f"Global Error: {str(e)}\n\n{traceback.format_exc()}", media_type="text/plain", status_code=500)
 
 # Mount Static Files
+# Here we change the static path to the dynamic path 
 script_dir = os.path.dirname(__file__)
 static_path = os.path.join(script_dir, "static")
 
