@@ -16,6 +16,19 @@ from fastapi.openapi.utils import get_openapi
 from google import genai
 
  
+from fastapi import FastAPI, Request, Response
+from src.utils.db import Base, engine 
+from src.tasks.models import TaskModel
+from src.tasks.router import task_routes
+from src.user.router import user_routes
+from src.frontend.router import router as frontend_router
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
+import mimetypes
+import os
+mimetypes.init()
+mimetypes.add_type('text/css', '.css')
+mimetypes.add_type('application/javascript', '.js')
 # when our application run then our application start connection in database 
 # 
 Base.metadata.create_all(engine)
@@ -23,6 +36,16 @@ app=FastAPI(title="This is my Task Management Applications")
  
 from fastapi import Request, Response
  
+ # 3. HTTPS Middleware (Fixes the "Blocked Mixed Content" error in your screenshot)
+class HTTPSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # This forces FastAPI to generate 'https' links for static files
+        request.scope["scheme"] = "https"
+        response = await call_next(request)
+        return response
+
+app.add_middleware(HTTPSMiddleware)
+
 @app.middleware("http")
 async def catch_exceptions_middleware(request: Request, call_next):
     try:
@@ -32,7 +55,18 @@ async def catch_exceptions_middleware(request: Request, call_next):
         return Response(content=f"Global Error: {str(e)}\n\n{traceback.format_exc()}", media_type="text/plain", status_code=500)
 
 # Mount Static Files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Here we change the static path to the dynamic path 
+ # Fix for potential MIME type issues on Linux
+mimetypes.add_type('text/css', '.css')
+
+# Get absolute path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+static_path = os.path.join(script_dir, "static")
+
+# Mount
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # include routes are used to register the routes in the main routes 
 app.include_router(frontend_router)
