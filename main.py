@@ -1,9 +1,8 @@
 from dotenv import load_dotenv
 import os
 load_dotenv(dotenv_path=".env", override=True)
-print("GOOGLE_API_KEY loaded:", os.getenv("GOOGLE_API_KEY"))
-
-print("Google_API:",os.getenv("GOOGLE_API_KEY"))
+ 
+ 
 from fastapi import FastAPI
 from src.utils.db import Base , engine 
 from src.tasks.models  import TaskModel

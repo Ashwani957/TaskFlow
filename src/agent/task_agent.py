@@ -10,7 +10,7 @@ from datetime import datetime
 # Connection Object to our google ai 
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
-client.models.list()
+# client.models.list()
 # -------- TOOL FUNCTIONS -------- #
 
 def create_task_tool(data: dict, db: Session, user):
