@@ -59,6 +59,26 @@
     <footer style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.875rem;">
         &copy; 2024 TaskFlow. Built with FastAPI & Jinja2.
     </footer>
+
+    {% if user %}
+    <!-- Chatbot Widget -->
+    <div class="chatbot-widget">
+        <button class="chatbot-toggle" id="chatbotToggle" title="Talk to AI Agent">💬</button>
+        <div class="chatbot-box" id="chatbotBox">
+            <div class="chatbot-header">
+                <span>AI Agent</span>
+                <button class="chatbot-close" id="chatbotClose">&times;</button>
+            </div>
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="chat-bubble bot">Hello {{ user.name or user.username or "there" }}! I am your AI assistant. How can I help you manage your tasks today?</div>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" id="chatbotInput" placeholder="Ask me something..." autocomplete="off" />
+                <button class="chatbot-send" id="chatbotSend">Send</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     <script>
         // Theme Toggle Logic
         const themeToggle = document.getElementById('theme-toggle');
@@ -111,6 +131,114 @@
                 listElem.innerHTML = '<div class="dropdown-item">No urgent tasks!</div>';
             }
         };
+
+        // Chatbot Logic
+        {% if user %}
+        const chatbotToggle = document.getElementById('chatbotToggle');
+        const chatbotBox = document.getElementById('chatbotBox');
+        const chatbotClose = document.getElementById('chatbotClose');
+        const chatbotInput = document.getElementById('chatbotInput');
+        const chatbotSend = document.getElementById('chatbotSend');
+        const chatbotMessages = document.getElementById('chatbotMessages');
+
+        if (chatbotToggle) {
+            chatbotToggle.addEventListener('click', () => {
+                chatbotBox.classList.add('open');
+                chatbotInput.focus();
+            });
+
+            chatbotClose.addEventListener('click', () => {
+                chatbotBox.classList.remove('open');
+            });
+
+            const formatMessage = (text) => {
+                if (typeof text === 'object') {
+                    try {
+                        return JSON.stringify(text, null, 2);
+                    } catch {
+                        return String(text);
+                    }
+                }
+                return text;
+            };
+
+            const appendMessage = (text, sender) => {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `chat-bubble ${sender}`;
+                msgDiv.textContent = formatMessage(text);
+                chatbotMessages.appendChild(msgDiv);
+                chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            };
+
+            const appendLoading = () => {
+                const loader = document.createElement('div');
+                loader.className = 'chat-loading';
+                loader.id = 'chatLoading';
+                loader.innerHTML = '<div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>';
+                chatbotMessages.appendChild(loader);
+                chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            };
+
+            const removeLoading = () => {
+                const loader = document.getElementById('chatLoading');
+                if (loader) loader.remove();
+            };
+
+            const sendMessage = async () => {
+                const text = chatbotInput.value.trim();
+                if (!text) return;
+
+                appendMessage(text, 'user');
+                chatbotInput.value = '';
+                appendLoading();
+
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append('prompt', text);
+
+                    const response = await fetch('/agent', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: formData.toString()
+                    });
+
+                    const rawText = await response.text();
+                    let data;
+                    try {
+                        data = JSON.parse(rawText);
+                    } catch (e) {
+                        throw new Error(`Server returned non-JSON: ${rawText}`);
+                    }
+
+                    removeLoading();
+                    
+                    if (response.ok) {
+                        appendMessage(data.response, 'bot');
+                        
+                        // Automatically reload the page if the agent modified a task
+                        if (data.response && data.response.toLowerCase().includes("successfully")) {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500); // 1.5 second delay so you can read the message first
+                        }
+                    } else {
+                        appendMessage("Error: " + (data.detail || "Something went wrong"), 'bot');
+                    }
+                } catch (error) {
+                    removeLoading();
+                    console.error("Chatbot Error:", error);
+                    appendMessage("Error: " + error.message, 'bot');
+                }
+            };
+
+            chatbotSend.addEventListener('click', sendMessage);
+            chatbotInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        }
+        {% endif %}
     </script>
 </body>
 </html>

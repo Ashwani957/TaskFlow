@@ -4,12 +4,19 @@ from datetime import datetime
 
 
 # This is a schema where data will be come from postman 
+# class TaskSchema(BaseModel):
+#     title:str
+#     description:str
+#     is_completed:bool=False
+#     priority:str="medium"
+#     due_date:Optional[datetime]=None
+
 class TaskSchema(BaseModel):
-    title:str
-    description:str
-    is_completed:bool=False
-    priority:str="medium"
-    due_date:Optional[datetime]=None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    priority: Optional[str] = "medium"
+    is_completed: Optional[bool] = False
+    due_date: Optional[datetime] = None
 
 
 class TaskResponseSchema(BaseModel):

@@ -1,3 +1,9 @@
+from dotenv import load_dotenv
+import os
+load_dotenv(dotenv_path=".env", override=True)
+print("GOOGLE_API_KEY loaded:", os.getenv("GOOGLE_API_KEY"))
+
+print("Google_API:",os.getenv("GOOGLE_API_KEY"))
 from fastapi import FastAPI
 from src.utils.db import Base , engine 
 from src.tasks.models  import TaskModel
@@ -5,14 +11,18 @@ from src.tasks.router  import task_routes
 from src.user.router import user_routes
 from src.frontend.router import router as frontend_router
 from fastapi.staticfiles import StaticFiles
+from fastapi.openapi.utils import get_openapi
+ 
+from google import genai
 
+ 
 # when our application run then our application start connection in database 
 # 
 Base.metadata.create_all(engine)
 app=FastAPI(title="This is my Task Management Applications")
-
+ 
 from fastapi import Request, Response
-
+ 
 @app.middleware("http")
 async def catch_exceptions_middleware(request: Request, call_next):
     try:
@@ -29,6 +39,34 @@ app.include_router(frontend_router)
 app.include_router(task_routes)
 # Here we connect the userRoutes Here 
 app.include_router(user_routes)
+
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        }
+    }
+    # Apply BearerAuth globally (all endpoints)
+    for path in openapi_schema["paths"].values():
+        for method in path.values():
+            method.setdefault("security", []).append({"BearerAuth": []})
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+
 
 if __name__ == "__main__":
     import uvicorn

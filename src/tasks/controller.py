@@ -9,6 +9,9 @@ def create_task(body: TaskSchema, db: Session, user: UserModel):
     if db is None:
         raise HTTPException(500, detail="Database session is None in create_task")
     data = body.model_dump()
+    task = db.query(TaskModel).filter(TaskModel.title == data["title"], TaskModel.user_id == user.id).first()
+    if task:
+        raise HTTPException(400, detail="Task already exists")
     new_task = TaskModel(**data, user_id=user.id)
     db.add(new_task)
     db.commit()
@@ -76,6 +79,30 @@ def update_tasks(body: TaskSchema, task_id: int, db: Session, user: UserModel):
     }
 
 
+def update_tasks_by_title(body: TaskSchema, title: str, db: Session, user: UserModel):
+    if db is None:
+        raise HTTPException(500, detail="Database session is None in update_tasks")
+    one_task = db.query(TaskModel).filter(TaskModel.title == title).first()
+    if not one_task:
+        raise HTTPException(404, detail=f"Task cannot find for particular id {title}")
+    
+    if one_task.user_id != user.id:
+        raise HTTPException(401, detail="You do not have access to edit it")
+
+    body_data = body.model_dump()
+    for field, value in body_data.items():
+        setattr(one_task, field, value)
+    
+    db.add(one_task)
+    db.commit()
+    db.refresh(one_task)
+    
+    return {
+        "Status": "Task Updated Successfully",
+        "data": one_task
+    }
+
+
 def delete_task(task_id: int, db: Session, user: UserModel):
     if db is None:
         raise HTTPException(500, detail="Database session is None in delete_task")
@@ -89,3 +116,39 @@ def delete_task(task_id: int, db: Session, user: UserModel):
     db.delete(one_task)
     db.commit()
     return None
+
+
+
+# Delete task by title
+def delete_task_by_title(title: str, db: Session, user: UserModel):
+    if db is None:
+        raise HTTPException(500, detail="Database session is None in delete_task")
+    one_task = db.query(TaskModel).filter(TaskModel.title == title, TaskModel.user_id == user.id).first()
+    if not one_task:
+        raise HTTPException(404, detail=f"Task with title '{title}' not found")
+    
+    db.delete(one_task)
+    db.commit()
+    return None
+
+
+# Update task by title
+def update_tasks_by_title(body: TaskSchema, title: str, db: Session, user: UserModel):
+    if db is None:
+        raise HTTPException(500, detail="Database session is None in update_tasks_by_title")
+    one_task = db.query(TaskModel).filter(TaskModel.title == title, TaskModel.user_id == user.id).first()
+    if not one_task:
+        raise HTTPException(404, detail=f"Task with title '{title}' not found")
+
+    body_data = body.model_dump(exclude_none=True)
+    for field, value in body_data.items():
+        setattr(one_task, field, value)
+
+    db.add(one_task)
+    db.commit()
+    db.refresh(one_task)
+
+    return {
+        "Status": "Task Updated Successfully",
+        "data": one_task
+    }

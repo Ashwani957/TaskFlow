@@ -9,6 +9,7 @@ from src.user.dtos import LoginSchema, UserSchema
 from src.utils.helpers import is_authenticated
 from src.user.models import UserModel
 import os
+from src.agent.task_agent import run_agent
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -174,3 +175,15 @@ async def edit_task(
 async def delete_task(task_id: int, db: Session = Depends(get_db), user: UserModel = Depends(is_authenticated)):
     task_controller.delete_task(task_id, db, user)
     return RedirectResponse(url="/tasks", status_code=status.HTTP_303_SEE_OTHER)
+
+
+
+@router.post("/agent")
+async def agent_action(
+    request: Request,
+    prompt: str = Form(...),
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(is_authenticated)
+):
+    result = run_agent(prompt, db, user)
+    return {"response": result}

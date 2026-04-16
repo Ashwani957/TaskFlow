@@ -15,7 +15,8 @@ task_routes=APIRouter(prefix="/tasks")
 
 @task_routes.post("/create", response_model=TaskResponseSchema,status_code=status.HTTP_201_CREATED)
 # Depends is like a autowired in the spring boot which automatically inject its db dependencies here
-def create_task(body:TaskSchema,db=Depends(get_db), user:UserModel=Depends(is_authenticated)):     
+def create_task(body:TaskSchema,db=Depends(get_db), user:UserModel=Depends(is_authenticated)):   
+    print("Creted")  
     if db is None:
         raise HTTPException(status_code=500, detail="Database session is None in API create_task")
     print(user.id)
@@ -62,7 +63,7 @@ def update_taks(body:TaskSchema,task_id:int, db=Depends(get_db),user:UserModel=D
 
 @task_routes.delete("/tasksDelete/{task_id}",status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(task_id:int, db=Depends(get_db),user:UserModel=Depends(is_authenticated)):
-    print("Delete")
+     
     return controller.delete_task(task_id,db,user)
 
  
