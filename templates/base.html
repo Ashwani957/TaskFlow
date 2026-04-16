@@ -142,13 +142,20 @@
         const chatbotMessages = document.getElementById('chatbotMessages');
 
         if (chatbotToggle) {
+            // Restore state from localStorage
+            if (localStorage.getItem('chatbotOpen') === 'true') {
+                chatbotBox.classList.add('open');
+            }
+
             chatbotToggle.addEventListener('click', () => {
                 chatbotBox.classList.add('open');
+                localStorage.setItem('chatbotOpen', 'true');
                 chatbotInput.focus();
             });
 
             chatbotClose.addEventListener('click', () => {
                 chatbotBox.classList.remove('open');
+                localStorage.setItem('chatbotOpen', 'false');
             });
 
             const formatMessage = (text) => {
