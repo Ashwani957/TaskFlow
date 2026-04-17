@@ -10,7 +10,9 @@ from src.utils.helpers import is_authenticated
 from src.user.models import UserModel
 import os
 from src.agent.task_agent import run_agent
-
+from src.agent.models import ChatHistoryModel
+import uuid
+from sqlalchemy import func
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
@@ -116,17 +118,22 @@ async def list_tasks(
         tasks_query = tasks_query.order_by(task_controller.TaskModel.created_at.desc())
         
     tasks = tasks_query.all()
+    # Fetch chat history for the user from agent.models
+    history = db.query(ChatHistoryModel).filter(ChatHistoryModel.user_id == user.id).order_by(ChatHistoryModel.created_at.asc()).all()
+    
     from datetime import datetime
     return templates.TemplateResponse(request, "index.html", {
         "tasks": tasks, 
         "user": user, 
         "sort": sort,
+        "history": history,
         "today": datetime.now().date()
     })
 
 @router.get("/tasks/create", response_class=HTMLResponse)
-async def create_task_page(request: Request, user: UserModel = Depends(is_authenticated)):
-    return templates.TemplateResponse(request, "task_form.html", {"user": user, "task": None})
+async def create_task_page(request: Request, db: Session = Depends(get_db), user: UserModel = Depends(is_authenticated)):
+    history = db.query(ChatHistoryModel).filter(ChatHistoryModel.user_id == user.id).order_by(ChatHistoryModel.created_at.asc()).all()
+    return templates.TemplateResponse(request, "task_form.html", {"user": user, "task": None, "history": history})
 
 @router.post("/tasks/create")
 async def create_task(
@@ -149,7 +156,8 @@ async def create_task(
 async def edit_task_page(task_id: int, request: Request, db: Session = Depends(get_db), user: UserModel = Depends(is_authenticated)):
     result = task_controller.getTaskById(task_id, db)
     task = result["data"] if isinstance(result, dict) and "data" in result else result
-    return templates.TemplateResponse(request=request, name="task_form.html", context={"user": user, "task": task})
+    history = db.query(ChatHistoryModel).filter(ChatHistoryModel.user_id == user.id).order_by(ChatHistoryModel.created_at.asc()).all()
+    return templates.TemplateResponse(request=request, name="task_form.html", context={"user": user, "task": task, "history": history})
 
 @router.post("/tasks/edit/{task_id}")
 async def edit_task(
@@ -182,8 +190,86 @@ async def delete_task(task_id: int, db: Session = Depends(get_db), user: UserMod
 async def agent_action(
     request: Request,
     prompt: str = Form(...),
+    session_id: str = Form(None),
     db: Session = Depends(get_db),
     user: UserModel = Depends(is_authenticated)
 ):
+    # 1. Generate response from agent
     result = run_agent(prompt, db, user)
-    return {"response": result}
+    
+    # 2. Handle Session ID
+    if not session_id or session_id == "null" or session_id == "undefined":
+        session_id = str(uuid.uuid4())
+        # First message in session sets the title
+        session_title = prompt[:50] + ("..." if len(prompt) > 50 else "")
+    else:
+        # Check if session exists to get title, or just keep it
+        existing = db.query(ChatHistoryModel).filter(ChatHistoryModel.session_id == session_id).first()
+        session_title = existing.session_title if existing else (prompt[:50] + "...")
+
+    # 3. Save to database
+    new_chat = ChatHistoryModel(
+        user_id=user.id, 
+        session_id=session_id,
+        session_title=session_title,
+        prompt=prompt, 
+        response=result
+    )
+    db.add(new_chat)
+    db.commit()
+    
+    return {"response": result, "session_id": session_id}
+
+@router.get("/agent/sessions")
+async def get_sessions(db: Session = Depends(get_db), user: UserModel = Depends(is_authenticated)):
+    # Get unique sessions for the user
+    sessions = db.query(
+        ChatHistoryModel.session_id, 
+        ChatHistoryModel.session_title,
+        func.max(ChatHistoryModel.created_at).label("last_msg")
+    ).filter(ChatHistoryModel.user_id == user.id)\
+     .group_by(ChatHistoryModel.session_id, ChatHistoryModel.session_title)\
+     .order_by(func.max(ChatHistoryModel.created_at).desc())\
+     .all()
+    
+    return [
+        {"id": s.session_id, "title": s.session_title or "Previous Conversation"} 
+        for s in sessions if s.session_id
+    ]
+
+@router.get("/agent/session/{session_id}")
+async def get_session_messages(session_id: str, db: Session = Depends(get_db), user: UserModel = Depends(is_authenticated)):
+    messages = db.query(ChatHistoryModel)\
+        .filter(ChatHistoryModel.user_id == user.id, ChatHistoryModel.session_id == session_id)\
+        .order_by(ChatHistoryModel.created_at.asc())\
+        .all()
+    
+    return [
+        {"prompt": m.prompt, "response": m.response} 
+        for m in messages
+    ]
+
+
+@router.delete("/agent/session/{session_id}")
+async def delete_session(session_id: str, db: Session = Depends(get_db), user: UserModel = Depends(is_authenticated)):
+    db.query(ChatHistoryModel).filter(
+        ChatHistoryModel.session_id == session_id,
+        ChatHistoryModel.user_id == user.id
+    ).delete()
+    db.commit()
+    return {"status": "deleted"}
+
+@router.patch("/agent/session/{session_id}")
+async def rename_session(
+    session_id: str, 
+    new_title: str = Form(...), 
+    db: Session = Depends(get_db), 
+    user: UserModel = Depends(is_authenticated)
+):
+    db.query(ChatHistoryModel).filter(
+        ChatHistoryModel.session_id == session_id,
+        ChatHistoryModel.user_id == user.id
+    ).update({"session_title": new_title})
+    db.commit()
+    return {"status": "renamed", "new_title": new_title}
+
