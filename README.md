@@ -2,6 +2,8 @@
 
 A modern Task Management System built with **FastAPI**, **Jinja2 Templates**, and **PostgreSQL**.
 
+For a detailed guide on how to use all the features, see the [**User Guide (USAGES.md)**](file:///c:/Users/acer/OneDrive/Desktop/fastApi_taskManagement/USAGES.md).
+
 ## 🌟 Key Features
 - **Integrated Frontend**: Complete UI for login, registration, and task CRUD.
 - **Task Priority**: High, Medium, and Low priorities with status badges.
